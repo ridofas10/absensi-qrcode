@@ -6,12 +6,46 @@ include 'navbar.php';
 
 <!-- page content -->
 <div class="right_col" role="main">
-    <pag class="">
+    <div class="container"
+        style="display: flex; justify-content: center; align-items: center; height: 70vh; flex-direction: column;">
         <h1>Scan QR Code</h1>
         <p>Arahkan kamera ke QR Code</p>
 
-        <!-- Tampilan video untuk kamera -->
-        <video id="preview" width="100%" height="300" style="border: 1px solid black;"></video>
+        <!-- Wrapper untuk video dan garis -->
+        <div style="position: relative; display: inline-block;">
+            <!-- Tampilan video untuk kamera -->
+            <video id="preview" width="100%" height="300" style="border: 3px solid black;"></video>
+
+            <!-- Garis di pojok-pojok video -->
+            <div style="position: absolute; top: -10px; left: -10px; width: 50px; height: 5px; background-color: blue;">
+            </div>
+            <div style="position: absolute; top: -10px; left: -10px; width: 5px; height: 50px; background-color: blue;">
+            </div>
+            <div
+                style="position: absolute; top: -10px; right: -10px; width: 50px; height: 5px; background-color: blue;">
+            </div>
+            <div
+                style="position: absolute; top: -10px; right: -10px; width: 5px; height: 50px; background-color: blue;">
+            </div>
+            <div
+                style="position: absolute; bottom: -5px; left: -10px; width: 50px; height: 5px; background-color: blue;">
+            </div>
+            <div
+                style="position: absolute; bottom: -5px; left: -10px; width: 5px; height: 50px; background-color: blue;">
+            </div>
+            <div
+                style="position: absolute; bottom: -5px; right: -10px; width: 50px; height: 5px; background-color: blue;">
+            </div>
+            <div
+                style="position: absolute; bottom: -5px; right: -10px; width: 5px; height: 50px; background-color: blue;">
+            </div>
+
+            <!-- Garis animasi naik turun -->
+            <div
+                style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background-color: blue; animation: scanUpDown 2s infinite;">
+            </div>
+        </div>
+        <br>
 
         <!-- Tombol untuk mengganti kamera -->
         <button id="toggleCamera" class="btn btn-primary mt-3">Ganti Kamera</button>
@@ -28,18 +62,14 @@ include 'navbar.php';
         let activeCameraIndex = 0;
 
         scanner.addListener('scan', function(content) {
-            // Parsing JSON dari QR Code
             try {
                 const qrData = JSON.parse(content);
-
-                // Validasi waktu kadaluarsa
-                const currentTime = Math.floor(Date.now() / 1000); // Waktu sekarang dalam detik
+                const currentTime = Math.floor(Date.now() / 1000);
                 if (currentTime - qrData.timestamp > 300) {
                     alert('QR Code kadaluarsa. Silakan minta QR Code baru.');
                     return;
                 }
 
-                // Mengirim data ke proses_absen.php
                 fetch('proses_absen.php', {
                         method: 'POST',
                         headers: {
@@ -50,9 +80,7 @@ include 'navbar.php';
                         })
                     })
                     .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         return response.json();
                     })
                     .then(data => {
@@ -94,8 +122,25 @@ include 'navbar.php';
             }
         });
         </script>
-    </pag>
+
+        <style>
+        @keyframes scanUpDown {
+            0% {
+                top: 0;
+            }
+
+            50% {
+                top: 97%;
+            }
+
+            100% {
+                top: 0;
+            }
+        }
+        </style>
+    </div>
 </div>
+
 <?php 
 include 'footer.php';
 ?>

@@ -17,8 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $userId = $_SESSION['id'] ?? null;
 
         if ($userId) {
-            // Ambil koneksi dari file header.php
-            $kodeMatkul = mysqli_real_escape_string($koneksi, $input['qr_code']);
+            // Ambil data dari QR Code (seluruh objek JSON)
+            $qrData = json_decode($input['qr_code'], true);
+            $kodeMatkul = mysqli_real_escape_string($koneksi, json_encode($qrData));  // Menyimpan seluruh data QR Code sebagai JSON
 
             // Ambil data pengguna dari tabel tbl_mahasiswa berdasarkan id user yang login
             $queryUser = "SELECT npm, nama, program_studi, kelas FROM tbl_mahasiswa WHERE id = '$userId'";
@@ -40,25 +41,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $currentDate = date('Y-m-d');
 
                 // Periksa apakah NPM sudah absen di kode matkul ini pada hari yang sama
-                $queryCheck = "SELECT id, created_at FROM tbl_absen 
-                               WHERE npm = '$npm' AND kode_matkul = '$kodeMatkul' AND DATE(created_at) = '$currentDate'
+                $queryCheck = "SELECT id, created_at, kode_matkul FROM tbl_absen 
+                               WHERE npm = '$npm' AND DATE(created_at) = '$currentDate'
                                ORDER BY created_at DESC LIMIT 1";
                 $resultCheck = mysqli_query($koneksi, $queryCheck);
 
                 if ($resultCheck && mysqli_num_rows($resultCheck) > 0) {
-                    // Ambil waktu absen terakhir
+                    // Ambil data absen terakhir
                     $row = mysqli_fetch_assoc($resultCheck);
-                    $lastAbsenceTime = strtotime($row['created_at']); // Convert waktu ke timestamp
-                    $currentTime = time(); // Waktu saat ini (timestamp)
+                    $lastAbsenceData = json_decode($row['kode_matkul'], true);  // Decode JSON dari absen terakhir
+                    $lastKodeMatkul = $lastAbsenceData['kode_matkul'] ?? '';
 
-                    // Hitung selisih waktu dalam detik
-                    $timeDifference = $currentTime - $lastAbsenceTime;
-
-                    // Jika selisih waktu lebih dari 5 menit (300 detik)
-                    if ($timeDifference > 300) {
-                        $response = ['success' => false, 'message' => 'QR Code kadaluarsa. Silakan gunakan QR Code baru.'];
-                    } else {
+                    // Jika kode_matkul yang sama ditemukan, maka mahasiswa sudah absen
+                    if ($lastKodeMatkul === $qrData['kode_matkul']) {
                         $response = ['success' => false, 'message' => 'Anda sudah melakukan absen hari ini untuk kode matkul ini.'];
+                    } else {
+                        // Mahasiswa belum absen, simpan data
+                        $createdAt = date('Y-m-d H:i:s');
+
+                        $queryInsert = "INSERT INTO tbl_absen (kode_matkul, npm, nama_mahasiswa, program_studi, kelas, created_at) 
+                                        VALUES ('$kodeMatkul', '$npm', '$namaMahasiswa', '$programStudi', '$kelas', '$createdAt')";
+
+                        if (mysqli_query($koneksi, $queryInsert)) {
+                            $response = ['success' => true, 'message' => 'Data absen berhasil disimpan.'];
+                        } else {
+                            $response = ['success' => false, 'message' => 'Gagal menyimpan data absen: ' . mysqli_error($koneksi)];
+                        }
                     }
                 } else {
                     // Mahasiswa belum absen, simpan data
