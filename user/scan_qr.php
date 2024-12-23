@@ -17,32 +17,34 @@ include 'navbar.php';
             <video id="preview" width="100%" height="300" style="border: 3px solid black;"></video>
 
             <!-- Garis di pojok-pojok video -->
-            <div style="position: absolute; top: -10px; left: -10px; width: 50px; height: 5px; background-color: blue;">
-            </div>
-            <div style="position: absolute; top: -10px; left: -10px; width: 5px; height: 50px; background-color: blue;">
+            <div
+                style="position: absolute; top: -10px; left: -10px; width: 50px; height: 5px; background-color: #007bff;">
             </div>
             <div
-                style="position: absolute; top: -10px; right: -10px; width: 50px; height: 5px; background-color: blue;">
+                style="position: absolute; top: -10px; left: -10px; width: 5px; height: 50px; background-color: #007bff;">
             </div>
             <div
-                style="position: absolute; top: -10px; right: -10px; width: 5px; height: 50px; background-color: blue;">
+                style="position: absolute; top: -10px; right: -10px; width: 50px; height: 5px; background-color: #007bff;">
             </div>
             <div
-                style="position: absolute; bottom: -5px; left: -10px; width: 50px; height: 5px; background-color: blue;">
+                style="position: absolute; top: -10px; right: -10px; width: 5px; height: 50px; background-color: #007bff;">
             </div>
             <div
-                style="position: absolute; bottom: -5px; left: -10px; width: 5px; height: 50px; background-color: blue;">
+                style="position: absolute; bottom: -5px; left: -10px; width: 50px; height: 5px; background-color: #007bff;">
             </div>
             <div
-                style="position: absolute; bottom: -5px; right: -10px; width: 50px; height: 5px; background-color: blue;">
+                style="position: absolute; bottom: -5px; left: -10px; width: 5px; height: 50px; background-color: #007bff;">
             </div>
             <div
-                style="position: absolute; bottom: -5px; right: -10px; width: 5px; height: 50px; background-color: blue;">
+                style="position: absolute; bottom: -5px; right: -10px; width: 50px; height: 5px; background-color: #007bff;">
+            </div>
+            <div
+                style="position: absolute; bottom: -5px; right: -10px; width: 5px; height: 50px; background-color: #007bff;">
             </div>
 
             <!-- Garis animasi naik turun -->
             <div
-                style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background-color: blue; animation: scanUpDown 2s infinite;">
+                style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background-color: #007bff; animation: scanUpDown 2s infinite;">
             </div>
         </div>
         <br>
