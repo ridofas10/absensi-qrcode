@@ -15,25 +15,31 @@ if (!file_exists($penyimpanan)) {
     mkdir($penyimpanan);
 }
 
-// Mendapatkan kode_matkul dan nama dari URL
-if (isset($_GET['kode_matkul']) && isset($_GET['nama'])) {
+// Mendapatkan kode_matkul, nama, dan pertemuan dari URL
+if (isset($_GET['kode_matkul']) && isset($_GET['nama']) && isset($_GET['pertemuan'])) {
     $kode_matkul = $_GET['kode_matkul'];
     $nama = $_GET['nama'];
+    $pertemuan = $_GET['pertemuan'];
 } else {
-    // Jika kode_matkul atau nama tidak ditemukan
-    die("Kode matkul atau nama tidak ditemukan.");
+    // Jika kode_matkul, nama, atau pertemuan tidak ditemukan
+    die("Kode matkul, nama, atau pertemuan tidak ditemukan.");
 }
+
+// Menambahkan NIDN ke dalam data QR Code
+$nidn = isset($_SESSION['nidn']) ? $_SESSION['nidn'] : 'Tidak Tersedia';
 
 // Isi QR Code yang akan dibuat
 $timestamp = time();
 $isi = json_encode([
     'kode_matkul' => $kode_matkul,
     'nama' => $nama,
+    'pertemuan' => $pertemuan,
+    'nidn' => $nidn,  // Menambahkan NIDN ke dalam QR Code
     'timestamp' => $timestamp
 ]);
 
-// Menyusun nama file berdasarkan kombinasi kode_matkul dan nama
-$namaFileQR = $penyimpanan . "qrcode_" . $kode_matkul . "_" . $nama . ".png";
+// Menyusun nama file berdasarkan kombinasi kode_matkul, nama, dan pertemuan
+$namaFileQR = $penyimpanan . "qrcode_" . $kode_matkul . "_" . $nama . "_pertemuan_" . $pertemuan . ".png";
 
 // Fungsi untuk memperbarui QR Code
 function updateQRCode($isi, $namaFileQR) {
@@ -118,7 +124,10 @@ if (isset($_POST['update_qr_code'])) {
         <div class="right_col" role="main">
             <div class=".bodyqr">
                 <div class="containerqr">
-                    <h2 class="qrq">QR Code untuk Kode Matkul: <?php echo $kode_matkul . '-' . $nama; ?></h2>
+                    <h2 class="qrq">QR Code untuk Kode Matkul:
+                        <?php echo $kode_matkul . '-' . $nama . ' - Pertemuan ' . $pertemuan; ?></h2>
+                    <p><strong>NIDN yang sedang login: </strong><?php echo $_SESSION['nidn']; ?></p>
+                    <!-- Menampilkan NIDN -->
                     <!-- Menampilkan QR Code yang ada, dengan tambahan ?time untuk memaksa browser reload jika file baru dibuat -->
                     <img src="<?php echo $namaFileQR . '?' . time(); ?>" alt="QR Code" class="qr">
                     <form method="POST">

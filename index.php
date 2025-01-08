@@ -17,19 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute();
     $result = $stmt->get_result();
 
-    // Cek apakah username ditemukan di tbl_user
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
-
-        // Verifikasi password
         if (password_verify($password, $user['password'])) {
             // Simpan sesi pengguna
             $_SESSION['login'] = true;
             $_SESSION['id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role'] = $user['role'];
-
-            // Redirect sesuai role
+            
             if ($user['role'] === 'Admin') {
                 header("Location: admin/dashboard.php");
             } elseif ($user['role'] === 'Dosen') {
@@ -39,42 +35,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             exit;
         } else {
-            // Jika password salah
             echo "<script>alert('Password salah!'); window.location.href='index.php';</script>";
         }
     } else {
-        // Jika username tidak ditemukan di tbl_user, cek di tbl_mahasiswa
-        $npm = mysqli_real_escape_string($koneksi, trim($_POST['username'])); // Gunakan input username sebagai NPM
-        $stmt = $koneksi->prepare("SELECT * FROM tbl_mahasiswa WHERE npm = ?");
-        $stmt->bind_param('s', $npm);
+        // Cek username di tbl_dosen
+        $stmt = $koneksi->prepare("SELECT * FROM tbl_dosen WHERE nidn = ?");
+        $stmt->bind_param('s', $username);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows === 1) {
-            $mahasiswa = $result->fetch_assoc();
-
-            // Verifikasi password
-            if (password_verify($password, $mahasiswa['password'])) {
-                // Simpan sesi pengguna
+            $dosen = $result->fetch_assoc();
+            if (password_verify($password, $dosen['password'])) {
                 $_SESSION['login'] = true;
-                $_SESSION['id'] = $mahasiswa['id'];
-                $_SESSION['npm'] = $mahasiswa['npm'];
-
-                // Redirect ke dashboard mahasiswa
-                header("Location: user/dashboard.php");
+                $_SESSION['id'] = $dosen['id'];
+                $_SESSION['nidn'] = $dosen['nidn'];
+                header("Location: dosen/dashboard.php");
                 exit;
             } else {
-                // Jika password salah
                 echo "<script>alert('Password salah!'); window.location.href='index.php';</script>";
             }
         } else {
-            // Jika username/NPM tidak ditemukan di tbl_user maupun tbl_mahasiswa
-            echo "<script>alert('Username atau NPM tidak ditemukan!'); window.location.href='index.php';</script>";
+            // Cek username/NPM di tbl_mahasiswa
+            $stmt = $koneksi->prepare("SELECT * FROM tbl_mahasiswa WHERE npm = ?");
+            $stmt->bind_param('s', $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows === 1) {
+                $mahasiswa = $result->fetch_assoc();
+                if (password_verify($password, $mahasiswa['password'])) {
+                    $_SESSION['login'] = true;
+                    $_SESSION['id'] = $mahasiswa['id'];
+                    $_SESSION['npm'] = $mahasiswa['npm'];
+                    header("Location: user/dashboard.php");
+                    exit;
+                } else {
+                    echo "<script>alert('Password salah!'); window.location.href='index.php';</script>";
+                }
+            } else {
+                echo "<script>alert('Username, NIDN, atau NPM tidak ditemukan!'); window.location.href='index.php';</script>";
+            }
         }
     }
 }
 ?>
-
 
 <!doctype html>
 <html lang="en">

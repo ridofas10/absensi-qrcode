@@ -1,3 +1,27 @@
+<?php
+include '../assets/conn/koneksi.php';
+// Pastikan pengguna sudah login dan memiliki variabel session untuk id
+if (isset($_SESSION['id'])) {
+    $id = $_SESSION['id'];
+
+    // Query untuk mengambil nama dosen berdasarkan id
+    $query = "SELECT nama FROM tbl_dosen WHERE id = '$id'";
+    $result = mysqli_query($koneksi, $query);
+
+    if ($result) {
+        $dosen = mysqli_fetch_assoc($result);
+        $nama_dosen = $dosen['nama']; // Simpan nama dosen
+    } else {
+        // Tangani jika query gagal atau nama dosen tidak ditemukan
+        $nama_dosen = 'Dosen Tidak Ditemukan';
+    }
+} else {
+    // Redirect ke halaman login jika belum login
+    header("Location: login.php");
+    exit();
+}
+?>
+
 <div class="col-md-3 left_col">
     <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;">
@@ -13,8 +37,9 @@
             </div>
             <div class="profile_info">
                 <span>Welcome,</span>
-                <h2>Dosen</h2>
+                <h2><?php echo htmlspecialchars($nama_dosen); ?></h2> <!-- Menampilkan nama dosen -->
             </div>
+
         </div>
         <!-- /menu profile quick info -->
 

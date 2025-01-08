@@ -1,33 +1,34 @@
 <?php
+// Sertakan file header yang sudah berisi koneksi database dan memulai session
 include '../../assets/conn/koneksi.php';
 
-// Ambil filter dari query string
+session_start();
+$nidnLogin = $_SESSION['nidn']; // NIDN dosen yang login
+
 $kodeMatkul = isset($_GET['kode_matkul']) ? $_GET['kode_matkul'] : '';
 $kelas = isset($_GET['kelas']) ? $_GET['kelas'] : '';
+$pertemuan = isset($_GET['pertemuan']) ? $_GET['pertemuan'] : '';
 
-// Bangun kondisi filter untuk query
-$conditions = [];
-if ($kodeMatkul) {
-    $kodeMatkulEscaped = mysqli_real_escape_string($koneksi, $kodeMatkul);
-    $conditions[] = "JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.kode_matkul')) = '$kodeMatkulEscaped'";
+$queryRekap = "SELECT * FROM tbl_absen";
+$conditions = ["JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.nidn')) = '$nidnLogin'"];
+
+if (!empty($kodeMatkul)) {
+    $conditions[] = "JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.kode_matkul')) = '$kodeMatkul'";
 }
-if ($kelas) {
-    $kelasEscaped = mysqli_real_escape_string($koneksi, $kelas);
-    $conditions[] = "a.kelas = '$kelasEscaped'";
+if (!empty($kelas)) {
+    $conditions[] = "kelas = '$kelas'";
+}
+if (!empty($pertemuan)) {
+    $conditions[] = "JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.pertemuan')) = '$pertemuan'";
 }
 
-// Query untuk mendapatkan data absensi
-$queryRekap = "SELECT * FROM tbl_absen a";
 if (!empty($conditions)) {
     $queryRekap .= " WHERE " . implode(' AND ', $conditions);
 }
-$queryRekap .= " ORDER BY a.created_at DESC";
+$queryRekap .= " ORDER BY created_at DESC";
 $resultRekap = mysqli_query($koneksi, $queryRekap);
 
-// Cek apakah query berhasil
-if (!$resultRekap) {
-    echo "Error: " . mysqli_error($koneksi);
-}
+// Lanjutkan dengan kode untuk menampilkan atau mencetak data rekap absensi
 ?>
 
 
@@ -148,6 +149,7 @@ if (!$resultRekap) {
                 <th>Nama Mahasiswa</th>
                 <th>Program Studi</th>
                 <th>Kelas</th>
+                <th>Pertemuan</th> <!-- Kolom untuk pertemuan -->
                 <th>Tanggal dan Waktu</th>
             </tr>
         </thead>
@@ -158,6 +160,7 @@ if (!$resultRekap) {
                 // Ambil kode_matkul yang disimpan dalam JSON
                 $kodeMatkul = json_decode($row['kode_matkul'], true);  // Mendecode JSON menjadi array
                 $namaMatkul = isset($kodeMatkul['nama']) ? $kodeMatkul['nama'] : 'Nama Tidak Ditemukan';  // Mengambil nama mata kuliah
+                $pertemuan = isset($kodeMatkul['pertemuan']) ? $kodeMatkul['pertemuan'] : 'Tidak Ditemukan';  // Mengambil pertemuan
 
                 echo '
                 <tr>
@@ -167,6 +170,7 @@ if (!$resultRekap) {
                     <td>' . htmlspecialchars($row['nama_mahasiswa']) . '</td>
                     <td>' . htmlspecialchars($row['program_studi']) . '</td>
                     <td>' . htmlspecialchars($row['kelas']) . '</td>
+                    <td>' . htmlspecialchars($pertemuan) . '</td> <!-- Menampilkan pertemuan -->
                     <td>' . htmlspecialchars(date('d-m-Y, H:i', strtotime($row['created_at']))) . '</td>
                 </tr>';
             }

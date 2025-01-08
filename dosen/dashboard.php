@@ -1,13 +1,20 @@
-<?php 
+<?php
 include 'header.php';
 include 'sidebar.php';
 include 'navbar.php';
 
-$sql = mysqli_query($koneksi, "SELECT * FROM tbl_matkul");
-$sql3 = mysqli_query($koneksi, "SELECT * FROM tbl_absen");
+$nidnLogin = $_SESSION['nidn']; // NIDN dosen yang login
+$idDosenLogin = $_SESSION['id']; // ID Dosen yang login
+
+// Query untuk menghitung jumlah mata kuliah berdasarkan id_dosen yang sedang login
+$sql = mysqli_query($koneksi, "SELECT * FROM tbl_matkul WHERE dosen_id = '$idDosenLogin'");
 $jumlahdata_matkul = mysqli_num_rows($sql);
+
+// Query untuk menghitung jumlah absensi berdasarkan nidn yang ada di dalam kode_matkul JSON
+$sql3 = mysqli_query($koneksi, "SELECT * FROM tbl_absen WHERE JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.nidn')) = '$nidnLogin'");
 $jumlahdata_mahasiswa = mysqli_num_rows($sql3);
 ?>
+
 
 
 

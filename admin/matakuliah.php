@@ -3,7 +3,6 @@ include 'header.php';
 include 'sidebar.php';
 include 'navbar.php';
 
-
 // Logika untuk Simpan Data
 if(isset($_POST['simpan'])) {
     // Tangkap inputan dari form
@@ -11,6 +10,7 @@ if(isset($_POST['simpan'])) {
     $nama = mysqli_real_escape_string($koneksi, $_POST['nama']);
     $sks = mysqli_real_escape_string($koneksi, $_POST['sks']);
     $semester = mysqli_real_escape_string($koneksi, $_POST['semester']);
+    $dosen_id = mysqli_real_escape_string($koneksi, $_POST['dosen_id']);
 
     // Cek apakah ini proses tambah atau edit
     if($_GET['hal'] == "edit") {
@@ -19,27 +19,66 @@ if(isset($_POST['simpan'])) {
             kode_matkul='$kode_matkul', 
             nama='$nama', 
             sks='$sks', 
-            semester='$semester' 
+            semester='$semester', 
+            dosen_id='$dosen_id' 
             WHERE kode_matkul = '$_GET[id]'";
         $edit = mysqli_query($koneksi, $query);
         
-        if($edit) {
-            echo "<script>alert('Data berhasil diupdate!'); window.location='matakuliah.php';</script>";
+        if ($edit) {
+            echo "
+            <script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: 'Data berhasil diupdate!',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location = 'matakuliah.php';
+                    }
+                });
+            </script>";
         } else {
-            echo "<script>alert('Data gagal diupdate!');</script>";
+            echo "
+            <script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: 'Data gagal diupdate!',
+                });
+            </script>";
         }
+        
 
     } else {
         // Proses simpan data baru
-        $query = "INSERT INTO tbl_matkul (kode_matkul, nama, sks, semester) 
-                  VALUES ('$kode_matkul', '$nama', '$sks', '$semester')";
+        $query = "INSERT INTO tbl_matkul (kode_matkul, nama, sks, semester, dosen_id) 
+                  VALUES ('$kode_matkul', '$nama', '$sks', '$semester', '$dosen_id')";
         $simpan = mysqli_query($koneksi, $query);
 
-        if($simpan) {
-            echo "<script>alert('Data berhasil disimpan!'); window.location='matakuliah.php';</script>";
+        if ($simpan) {
+            echo "
+            <script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: 'Data berhasil disimpan!',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location = 'matakuliah.php';
+                    }
+                });
+            </script>";
         } else {
-            echo "<script>alert('Data gagal disimpan!');</script>";
+            echo "
+            <script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: 'Data gagal disimpan!',
+                });
+            </script>";
         }
+        
     }
 }
 
@@ -55,6 +94,7 @@ if(isset($_GET['hal']) && $_GET['hal'] == "edit") {
         $vnama = $data['nama'];
         $vsks = $data['sks'];
         $vsemester = $data['semester'];
+        $vdosen_id = $data['dosen_id'];
     }
 }
 
@@ -63,18 +103,36 @@ if(isset($_GET['hal']) && $_GET['hal'] == "hapus") {
     $query = "DELETE FROM tbl_matkul WHERE kode_matkul = '$_GET[id]'";
     $hapus = mysqli_query($koneksi, $query);
     
-    if($hapus) {
-        echo "<script>alert('Data berhasil dihapus!'); window.location='matakuliah.php';</script>";
+    if ($hapus) {
+        echo "
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: 'Data berhasil dihapus!',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location = 'matakuliah.php';
+                }
+            });
+        </script>";
     } else {
-        echo "<script>alert('Data gagal dihapus!');</script>";
+        echo "
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: 'Data gagal dihapus!',
+            });
+        </script>";
     }
+    
 }
 ?>
 
 <!-- page content -->
 <div class="right_col" role="main">
     <pag class="">
-
         <div class="card mt-3">
             <div class="card-header text-white hide" style="background-color: #2a3f54;">
                 Form Data Mata Kuliah
@@ -98,6 +156,19 @@ if(isset($_GET['hal']) && $_GET['hal'] == "hapus") {
                         <label for="semester">Semester</label>
                         <input type="number" class="form-control" id="semester" name="semester" value="<?=@$vsemester?>"
                             required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dosen_id">Nama Dosen</label>
+                        <select class="form-control" id="dosen_id" name="dosen_id" required>
+                            <option value="">Pilih Dosen</option>
+                            <?php
+                            $tampil_dosen = mysqli_query($koneksi, "SELECT * FROM tbl_dosen ORDER BY nama ASC");
+                            while($dosen = mysqli_fetch_array($tampil_dosen)) {
+                                $selected = ($dosen['id'] == @$vdosen_id) ? 'selected' : '';
+                                echo "<option value='{$dosen['id']}' $selected>{$dosen['nama']}</option>";
+                            }
+                            ?>
+                        </select>
                     </div>
                     <button type="submit" name="simpan" class="btn btn-primary mt-3">Simpan</button>
                     <button type="reset" name="batal" class="btn btn-warning mt-3">Reset</button>
@@ -130,21 +201,23 @@ if(isset($_GET['hal']) && $_GET['hal'] == "hapus") {
                                 <th>Mata Kuliah</th>
                                 <th>SKS</th>
                                 <th>Semester</th>
+                                <th>Nama Dosen</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php
-        $tampil = mysqli_query($koneksi, "SELECT * FROM tbl_matkul ORDER BY kode_matkul DESC");
-        $no = 1;
-        while($data = mysqli_fetch_array($tampil)) :
-        ?>
+                            $tampil = mysqli_query($koneksi, "SELECT m.*, d.nama as dosen_nama FROM tbl_matkul m JOIN tbl_dosen d ON m.dosen_id = d.id ORDER BY m.kode_matkul DESC");
+                            $no = 1;
+                            while($data = mysqli_fetch_array($tampil)) :
+                            ?>
                             <tr>
                                 <td><?=$no++?></td>
                                 <td><?=$data['kode_matkul']?></td>
                                 <td><?=$data['nama']?></td>
                                 <td><?=$data['sks']?></td>
                                 <td><?=$data['semester']?></td>
+                                <td><?=$data['dosen_nama']?></td>
                                 <td>
                                     <a href="?hal=edit&id=<?=$data['kode_matkul']?>" class="btn btn-primary">Edit</a>
                                     <a href="?hal=hapus&id=<?=$data['kode_matkul']?>" class="btn btn-danger"

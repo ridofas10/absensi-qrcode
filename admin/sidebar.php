@@ -1,3 +1,26 @@
+<?php
+// Pastikan pengguna sudah login dan memiliki variabel session untuk username
+if (isset($_SESSION['username'])) {
+    $username = $_SESSION['username'];
+
+    // Query untuk mengambil peran dari tbl_user berdasarkan username yang sedang login
+    $query = "SELECT role FROM tbl_user WHERE username = '$username'";
+    $result = mysqli_query($koneksi, $query);
+
+    if ($result) {
+        $user = mysqli_fetch_assoc($result);
+        $role = $user['role']; // Simpan nilai peran
+    } else {
+        // Tangani jika query gagal atau peran pengguna tidak ditemukan
+        $role = 'Guest';
+    }
+} else {
+    // Redirect ke halaman login jika belum login
+    header("Location: login.php");
+    exit();
+}
+?>
+
 <div class="col-md-3 left_col">
     <div class="left_col scroll-view">
         <div class="navbar nav_title" style="border: 0;">
@@ -13,8 +36,9 @@
             </div>
             <div class="profile_info">
                 <span>Welcome,</span>
-                <h2>Administrator</h2>
+                <h2><?php echo htmlspecialchars($role); ?></h2> <!-- Menampilkan peran pengguna -->
             </div>
+
         </div>
         <!-- /menu profile quick info -->
 
@@ -34,6 +58,7 @@
                         <ul class="nav child_menu">
                             <li><a href="matakuliah.php">Mata Kuliah</a></li>
                             <li><a href="mahasiswa.php">Mahasiswa</a></li>
+                            <li><a href="tambah_dosen.php">Dosen</a></li>
                         </ul>
                     </li>
                 </ul>

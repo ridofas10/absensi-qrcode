@@ -45,10 +45,29 @@ if (isset($_POST['simpan'])) {
     $update = mysqli_query($koneksi, $query);
     
     if ($update) {
-        echo "<script>alert('Data berhasil diupdate!'); window.location='edituser.php';</script>";
+        echo "
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: 'Data berhasil diupdate!',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location = 'edituser.php';
+                }
+            });
+        </script>";
     } else {
-        echo "<script>alert('Data gagal diupdate!');</script>";
+        echo "
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: 'Data gagal diupdate!',
+            });
+        </script>";
     }
+    
 }
 ?>
 

@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Ambil data dari body JSON
     $input = json_decode(file_get_contents('php://input'), true);
 
+    // Validasi jika QR Code tidak ditemukan
     if (isset($input['qr_code']) && !empty($input['qr_code'])) {
         // Mulai sesi untuk mendapatkan user ID
         session_start();
@@ -19,6 +20,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($userId) {
             // Ambil data dari QR Code (seluruh objek JSON)
             $qrData = json_decode($input['qr_code'], true);
+            
+            // Validasi struktur data QR Code
+            if (!isset($qrData['kode_matkul']) || !isset($qrData['timestamp'])) {
+                $response = ['success' => false, 'message' => 'QR Code tidak valid.'];
+                echo json_encode($response);
+                exit();
+            }
+            
+            // Escape data untuk mencegah SQL Injection
             $kodeMatkul = mysqli_real_escape_string($koneksi, json_encode($qrData));  // Menyimpan seluruh data QR Code sebagai JSON
 
             // Ambil data pengguna dari tabel tbl_mahasiswa berdasarkan id user yang login
@@ -28,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($resultUser && mysqli_num_rows($resultUser) > 0) {
                 $userData = mysqli_fetch_assoc($resultUser);
 
-                // Masukkan data ke tabel tbl_absen
+                // Ambil data mahasiswa
                 $npm = mysqli_real_escape_string($koneksi, $userData['npm']);
                 $namaMahasiswa = mysqli_real_escape_string($koneksi, $userData['nama']);
                 $programStudi = mysqli_real_escape_string($koneksi, $userData['program_studi']);
@@ -58,7 +68,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         // Mahasiswa belum absen, simpan data
                         $createdAt = date('Y-m-d H:i:s');
-
                         $queryInsert = "INSERT INTO tbl_absen (kode_matkul, npm, nama_mahasiswa, program_studi, kelas, created_at) 
                                         VALUES ('$kodeMatkul', '$npm', '$namaMahasiswa', '$programStudi', '$kelas', '$createdAt')";
 
@@ -71,7 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     // Mahasiswa belum absen, simpan data
                     $createdAt = date('Y-m-d H:i:s');
-
                     $queryInsert = "INSERT INTO tbl_absen (kode_matkul, npm, nama_mahasiswa, program_studi, kelas, created_at) 
                                     VALUES ('$kodeMatkul', '$npm', '$namaMahasiswa', '$programStudi', '$kelas', '$createdAt')";
 
@@ -98,3 +106,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ob_clean();
 echo json_encode($response);
 exit();
+?>

@@ -2,10 +2,7 @@
 include 'header.php';
 include 'sidebar.php';
 include 'navbar.php';
-
 ?>
-
-
 
 <!-- page content -->
 <div class="right_col" role="main">
@@ -26,10 +23,11 @@ include 'navbar.php';
                             <th>QR Code</th>
                         </tr>
                         <?php
-            $tampil = mysqli_query($koneksi, "SELECT * FROM tbl_matkul ORDER BY kode_matkul DESC");
-            $no = 1;
-            while ($data = mysqli_fetch_array($tampil)) :
-            ?>
+                        $id_pengguna = $_SESSION['id']; // Ambil id dari sesi
+                        $tampil = mysqli_query($koneksi, "SELECT * FROM tbl_matkul WHERE dosen_id = '$id_pengguna' ORDER BY kode_matkul DESC");
+                        $no = 1;
+                        while ($data = mysqli_fetch_array($tampil)) :
+                        ?>
                         <tr>
                             <td><?= $no++ ?></td>
                             <td><?= $data['kode_matkul'] ?></td>
@@ -37,8 +35,17 @@ include 'navbar.php';
                             <td><?= $data['sks'] ?></td>
                             <td><?= $data['semester'] ?></td>
                             <td>
-                                <a href="generate_qr.php?kode_matkul=<?= $data['kode_matkul'] ?>&nama=<?= urlencode($data['nama']) ?>"
-                                    class="btn btn-success">Lihat QR Code</a>
+                                <form method="GET" action="generate_qr.php">
+                                    <input type="hidden" name="kode_matkul" value="<?= $data['kode_matkul'] ?>">
+                                    <input type="hidden" name="nama" value="<?= urlencode($data['nama']) ?>">
+                                    <select name="pertemuan" class="form-select" required>
+                                        <option value="">Pilih Pertemuan</option>
+                                        <?php for ($i = 1; $i <= 16; $i++): ?>
+                                        <option value="<?= $i ?>">Pertemuan <?= $i ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                    <button type="submit" class="btn btn-success mt-2">Lihat QR Code</button>
+                                </form>
                             </td>
                         </tr>
                         <?php endwhile; ?>
@@ -47,13 +54,9 @@ include 'navbar.php';
             </div>
         </div>
 </div>
-
-
-
 </pag>
 </div>
 <!-- /page content -->
 <?php 
 include 'footer.php';
-
 ?>

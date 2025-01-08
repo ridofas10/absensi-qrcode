@@ -1,31 +1,71 @@
 <?php
-// Sertakan file header yang sudah berisi koneksi database
+// Sertakan file header yang sudah berisi koneksi database dan memulai session
 include 'header.php';
 include 'sidebar.php';
 include 'navbar.php';
 
+$nidnLogin = $_SESSION['nidn']; // NIDN dosen yang login
+
 // Ambil semua kode_matkul yang tersedia untuk opsi filter
-$queryKodeMatkul = "SELECT DISTINCT JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.kode_matkul')) AS kode_matkul, JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.nama')) AS nama_matkul FROM tbl_absen ORDER BY kode_matkul";
+// Ambil semua kode_matkul yang tersedia untuk opsi filter
+$queryKodeMatkul = "
+SELECT DISTINCT 
+    JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.kode_matkul')) AS kode_matkul, 
+    JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.nama')) AS nama_matkul 
+FROM tbl_absen 
+WHERE JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.nidn')) = '$nidnLogin' 
+ORDER BY kode_matkul";
 $resultKodeMatkul = mysqli_query($koneksi, $queryKodeMatkul);
 
+
 // Ambil semua kelas yang tersedia untuk opsi filter
-$queryKelas = "SELECT DISTINCT kelas FROM tbl_absen ORDER BY kelas";
+// Ambil semua kelas yang tersedia untuk opsi filter
+$queryKelas = "
+SELECT DISTINCT kelas 
+FROM tbl_absen 
+WHERE JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.nidn')) = '$nidnLogin'";
+
+// Tambahkan filter kode_matkul jika dipilih
+if (!empty($selectedKodeMatkul)) {
+    $queryKelas .= " AND JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.kode_matkul')) = '$selectedKodeMatkul'";
+}
+
+$queryKelas .= " ORDER BY kelas";
 $resultKelas = mysqli_query($koneksi, $queryKelas);
 
-// Cek apakah ada pilihan kode_matkul dan kelas dari form
+// Ambil semua pertemuan yang tersedia untuk opsi filter
+// Ambil semua pertemuan yang tersedia untuk opsi filter
+$queryPertemuan = "
+SELECT DISTINCT JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.pertemuan')) AS pertemuan 
+FROM tbl_absen 
+WHERE JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.nidn')) = '$nidnLogin'";
+
+// Tambahkan filter kode_matkul jika dipilih
+if (!empty($selectedKodeMatkul)) {
+    $queryPertemuan .= " AND JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.kode_matkul')) = '$selectedKodeMatkul'";
+}
+
+$queryPertemuan .= " ORDER BY pertemuan";
+$resultPertemuan = mysqli_query($koneksi, $queryPertemuan);
+
+
+// Cek apakah ada pilihan kode_matkul, kelas, atau pertemuan dari form
 $selectedKodeMatkul = isset($_POST['kode_matkul']) ? $_POST['kode_matkul'] : '';
 $selectedKelas = isset($_POST['kelas']) ? $_POST['kelas'] : '';
+$selectedPertemuan = isset($_POST['pertemuan']) ? $_POST['pertemuan'] : '';
 
-// Ambil data absen sesuai kode_matkul dan kelas yang dipilih, atau tampilkan semua jika tidak ada filter
+// Ambil data absen sesuai kode_matkul, kelas, dan pertemuan yang dipilih, atau tampilkan semua jika tidak ada filter
 $queryAbsen = "SELECT * FROM tbl_absen";
-$conditions = [];
+$conditions = ["JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.nidn')) = '$nidnLogin'"];
 
 if (!empty($selectedKodeMatkul)) {
-    // Mengambil kode_matkul yang ada dalam JSON
     $conditions[] = "JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.kode_matkul')) = '$selectedKodeMatkul'";
 }
 if (!empty($selectedKelas)) {
     $conditions[] = "kelas = '$selectedKelas'";
+}
+if (!empty($selectedPertemuan)) {
+    $conditions[] = "JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.pertemuan')) = '$selectedPertemuan'";
 }
 
 // Jika ada kondisi filter, gabungkan dan modifikasi query
@@ -35,7 +75,6 @@ if (!empty($conditions)) {
 
 $queryAbsen .= " ORDER BY created_at DESC";
 $resultAbsen = mysqli_query($koneksi, $queryAbsen);
-
 ?>
 
 <!-- page content -->
@@ -45,7 +84,7 @@ $resultAbsen = mysqli_query($koneksi, $queryAbsen);
             Detail Absensi
         </div>
         <div class="card-body">
-            <!-- Form filter kode_matkul dan kelas -->
+            <!-- Form filter kode_matkul, kelas, dan pertemuan -->
             <form method="POST" action="">
                 <div class="input-group mb-3">
                     <select class="form-select" name="kode_matkul" id="kode_matkul">
@@ -53,15 +92,13 @@ $resultAbsen = mysqli_query($koneksi, $queryAbsen);
                         <?php 
                         while ($row = mysqli_fetch_assoc($resultKodeMatkul)) { 
                             $kodeMatkul = $row['kode_matkul'];
-                            $namaMatkul = $row['nama_matkul'] ?? $kodeMatkul; // Menampilkan nama mata kuliah atau kode_matkul jika nama tidak ada
+                            $namaMatkul = $row['nama_matkul'] ?? $kodeMatkul;
                         ?>
                         <option value="<?= $kodeMatkul; ?>"
                             <?= $kodeMatkul == $selectedKodeMatkul ? 'selected' : ''; ?>>
                             <?= $namaMatkul; ?>
                         </option>
-                        <?php 
-                        }
-                        ?>
+                        <?php } ?>
                     </select>&nbsp;&nbsp;
 
                     <select class="form-select" name="kelas" id="kelas">
@@ -72,15 +109,24 @@ $resultAbsen = mysqli_query($koneksi, $queryAbsen);
                         <option value="<?= $row['kelas']; ?>" <?= $row['kelas'] == $selectedKelas ? 'selected' : ''; ?>>
                             <?= $row['kelas']; ?>
                         </option>
+                        <?php } ?>
+                    </select>&nbsp;&nbsp;
+
+                    <select class="form-select" name="pertemuan" id="pertemuan">
+                        <option value="">Pilih Pertemuan (Semua)</option>
                         <?php 
-                        }
+                        while ($row = mysqli_fetch_assoc($resultPertemuan)) { 
+                            $pertemuan = $row['pertemuan'];
                         ?>
+                        <option value="<?= $pertemuan; ?>" <?= $pertemuan == $selectedPertemuan ? 'selected' : ''; ?>>
+                            Pertemuan <?= $pertemuan; ?>
+                        </option>
+                        <?php } ?>
                     </select>&nbsp;&nbsp;
 
                     <button class="btn btn-primary" type="submit">Tampilkan</button><br>
-                    <a href="cetak/cetak.php?kode_matkul=<?= urlencode($selectedKodeMatkul); ?>&kelas=<?= urlencode($selectedKelas); ?>"
+                    <a href="cetak/cetak.php?kode_matkul=<?= urlencode($selectedKodeMatkul); ?>&kelas=<?= urlencode($selectedKelas); ?>&pertemuan=<?= urlencode($selectedPertemuan); ?>"
                         target="_blank" class="btn btn-success">Cetak Rekap</a>
-
                 </div>
             </form>
 
@@ -95,6 +141,7 @@ $resultAbsen = mysqli_query($koneksi, $queryAbsen);
                             <th>Nama</th>
                             <th>Program Studi</th>
                             <th>Kelas</th>
+                            <th>Pertemuan</th>
                             <th>Tanggal dan Waktu</th>
                         </tr>
                     </thead>
@@ -103,25 +150,25 @@ $resultAbsen = mysqli_query($koneksi, $queryAbsen);
                             $no = 1;
                             if (mysqli_num_rows($resultAbsen) > 0) {
                                 while ($row = mysqli_fetch_assoc($resultAbsen)) { 
-                                    // Mendapatkan nama mata kuliah dari JSON
-                                    $data = json_decode($row['kode_matkul'], true); // Mengubah JSON menjadi array
-                                    $namaMatkul = $data['nama'] ?? 'Nama tidak tersedia'; // Jika nama tidak ada
+                                    $data = json_decode($row['kode_matkul'], true);
+                                    $namaMatkul = $data['nama'] ?? 'Nama tidak tersedia';
+                                    $pertemuan = $data['pertemuan'] ?? 'Tidak Ditemukan';
                         ?>
                         <tr class="absen-row">
                             <td><?= $no++; ?></td>
-                            <td><?= $namaMatkul; ?></td> <!-- Tampilkan nama mata kuliah -->
+                            <td><?= $namaMatkul; ?></td>
                             <td><?= $row['npm']; ?></td>
                             <td><?= $row['nama_mahasiswa']; ?></td>
                             <td><?= $row['program_studi']; ?></td>
                             <td><?= $row['kelas']; ?></td>
+                            <td><?= $pertemuan; ?></td>
                             <td><?= $row['created_at']; ?></td>
                         </tr>
-                        <?php 
-                                }
+                        <?php } 
                             } else { 
                         ?>
                         <tr>
-                            <td colspan="7" class="text-center">Data absen tidak ditemukan</td>
+                            <td colspan="8" class="text-center">Data absen tidak ditemukan</td>
                         </tr>
                         <?php } ?>
                     </tbody>

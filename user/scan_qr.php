@@ -67,11 +67,16 @@ include 'navbar.php';
             try {
                 const qrData = JSON.parse(content);
                 const currentTime = Math.floor(Date.now() / 1000);
-                if (currentTime - qrData.timestamp > 300) {
-                    alert('QR Code kadaluarsa. Silakan minta QR Code baru.');
+                if (currentTime - qrData.timestamp > 180) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'QR Code Kadaluarsa',
+                        text: 'QR Code kadaluarsa. Silakan minta QR Code baru.',
+                    });
                     return;
                 }
 
+                // Kirimkan data ke server untuk diproses (misalnya absen)
                 fetch('proses_absen.php', {
                         method: 'POST',
                         headers: {
@@ -87,40 +92,70 @@ include 'navbar.php';
                     })
                     .then(data => {
                         if (data.success) {
-                            alert(data.message);
-                            window.location.href = 'data_absen_user.php';
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: data.message,
+                                allowOutsideClick: false, // Cegah klik di luar untuk menutup alert
+                            }).then(() => {
+                                // Redirect setelah alert ditutup
+                                window.location.href = 'data_absen_user.php';
+                            });
                         } else {
-                            alert(data.message);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: data.message
+                            });
                         }
                     })
                     .catch(error => {
-                        alert('Terjadi kesalahan: ' + error.message);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Terjadi Kesalahan',
+                            text: 'Terjadi kesalahan: ' + error.message,
+                        });
+
                         console.error('Kesalahan:', error);
                     });
 
             } catch (e) {
-                alert('QR Code tidak valid.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Kesalahan',
+                    text: 'QR Code tidak valid.',
+                });
                 console.error('Error parsing QR Code:', e);
             }
         });
 
+        // Memulai kamera dan memilih kamera yang tersedia
         Instascan.Camera.getCameras().then(function(availableCameras) {
             if (availableCameras.length > 0) {
                 cameras = availableCameras;
                 scanner.start(cameras[activeCameraIndex]);
             } else {
-                alert('Tidak ada kamera yang terdeteksi.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Kesalahan',
+                    text: 'Tidak ada kamera yang terdeteksi.',
+                });
             }
         }).catch(function(e) {
             console.error(e);
         });
 
+        // Fungsi untuk mengganti kamera
         document.getElementById('toggleCamera').addEventListener('click', function() {
             if (cameras.length > 1) {
                 activeCameraIndex = (activeCameraIndex + 1) % cameras.length;
                 scanner.start(cameras[activeCameraIndex]);
             } else {
-                alert('Hanya satu kamera yang tersedia.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'Hanya satu kamera yang tersedia.',
+                });
             }
         });
         </script>

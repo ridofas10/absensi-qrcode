@@ -1,11 +1,14 @@
 <?php
-// Sertakan file header yang sudah berisi koneksi database
+
 include 'header.php';
 include 'sidebar.php';
 include 'navbar.php';
 
-// Ambil semua data absen dari tabel tbl_absen tanpa filter npm
-$queryAbsen = "SELECT * FROM tbl_absen ORDER BY created_at DESC";
+// Ambil nidn dari sesi yang login
+$nidnDosen = isset($_SESSION['nidn']) ? $_SESSION['nidn'] : '';  // Ambil nidn dari session yang login
+
+// Query untuk mengambil data absen berdasarkan nidn yang ada dalam JSON kolom kode_matkul
+$queryAbsen = "SELECT * FROM tbl_absen WHERE JSON_UNQUOTE(JSON_EXTRACT(kode_matkul, '$.nidn')) = '$nidnDosen' ORDER BY created_at DESC";
 $resultAbsen = mysqli_query($koneksi, $queryAbsen);
 
 // Cek apakah ada request untuk menghapus data
@@ -16,12 +19,26 @@ if (isset($_GET['id'])) {
     $queryHapus = "DELETE FROM tbl_absen WHERE id = '$id'";
     
     if (mysqli_query($koneksi, $queryHapus)) {
-        echo "<script>alert('Data berhasil dihapus'); window.location.href = 'data_absen.php';</script>";
+        echo "<script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: 'Data berhasil dihapus',
+                }).then(() => {
+                    window.location.href = 'data_absen.php';
+                });
+              </script>";
     } else {
-        echo "<script>alert('Terjadi kesalahan saat menghapus data');</script>";
+        echo "<script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Terjadi Kesalahan',
+                    text: 'Terjadi kesalahan saat menghapus data',
+                });
+              </script>";
     }
+    
 }
-
 ?>
 
 <!-- page content -->
@@ -52,6 +69,7 @@ if (isset($_GET['id'])) {
                             <th>Program Studi</th>
                             <th>Kelas</th>
                             <th>Tanggal dan Waktu</th>
+                            <th>Pertemuan</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -60,25 +78,32 @@ if (isset($_GET['id'])) {
                             $no = 1;
                             if (mysqli_num_rows($resultAbsen) > 0) {
                                 while ($row = mysqli_fetch_assoc($resultAbsen)) { 
+                                    // Mengambil data JSON dari kolom kode_matkul
+                                    $data = json_decode($row['kode_matkul'], true);
+
+                                    // Mengambil nilai 'pertemuan' dari JSON
+                                    $pertemuan = isset($data['pertemuan']) ? $data['pertemuan'] : 'Tidak Ditemukan';
+
+                                    // Mengambil nidn dari JSON
+                                    $nidn = isset($data['nidn']) ? $data['nidn'] : 'Tidak Ditemukan';
                         ?>
                         <tr class="absen-row">
                             <td><?= $no++; ?></td>
                             <td>
                                 <?php 
-    $data = json_decode($row['kode_matkul'], true); // Mengubah JSON menjadi array
-    if (isset($data['kode_matkul']) && isset($data['nama'])) {
-        echo $data['kode_matkul'] . '-' . $data['nama']; // Format menjadi KodeMatkul-Nama
-    } else {
-        echo "Data tidak valid"; // Pesan jika data tidak lengkap
-    }
-    ?>
+                                    if (isset($data['kode_matkul']) && isset($data['nama'])) {
+                                        echo $data['kode_matkul'] . '-' . $data['nama']; // Format menjadi KodeMatkul-Nama
+                                    } else {
+                                        echo "Data tidak valid"; // Pesan jika data tidak lengkap
+                                    }
+                                ?>
                             </td>
-
                             <td><?= $row['npm']; ?></td>
                             <td><?= $row['nama_mahasiswa']; ?></td>
                             <td><?= $row['program_studi']; ?></td>
                             <td><?= $row['kelas']; ?></td>
                             <td><?= $row['created_at']; ?></td>
+                            <td><?= $pertemuan; ?></td> <!-- Menampilkan pertemuan -->
                             <td>
                                 <a href="?id=<?= $row['id']; ?>" class="btn btn-danger"
                                     onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">Hapus</a>
@@ -90,7 +115,7 @@ if (isset($_GET['id'])) {
                             } else { 
                         ?>
                         <tr>
-                            <td colspan="7" class="text-center">Data absen tidak ditemukan</td>
+                            <td colspan="9" class="text-center">Data absen tidak ditemukan</td>
                         </tr>
                         <?php } ?>
                     </tbody>

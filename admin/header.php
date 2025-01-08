@@ -37,3 +37,4 @@ if (!isset($_SESSION['id'])) {
 <body class="nav-md">
     <div class="container body">
         <div class="main_container">
+            <script src='../assets/sweetalert2/dist/sweetalert2.all.min.js'></script>

@@ -3,48 +3,68 @@ include 'header.php';
 include 'sidebar.php';
 include 'navbar.php';
 
+$id_dosen = $_SESSION['id']; // Ambil ID dosen dari session
 
-$id_user = $_SESSION['id']; // Ambil ID pengguna dari session
-
-// Ambil data pengguna berdasarkan ID
-$query = "SELECT * FROM tbl_user WHERE id = '$id_user'";
+// Ambil data dosen berdasarkan ID
+$query = "SELECT * FROM tbl_dosen WHERE id = '$id_dosen'";
 $result = mysqli_query($koneksi, $query);
 $data = mysqli_fetch_array($result);
 
 if ($data) {
-    // Simpan data pengguna dalam variabel untuk digunakan di form
-    $vusername = $data['username'];
-    $vrole = $data['role'];
+    // Simpan data dosen dalam variabel untuk digunakan di form
+    $vnidn = $data['nidn'];
+    $vnama = $data['nama'];
+    $vprogram_studi = $data['program_studi'];
+    $vjabatan = $data['jabatan'];
     $vpassword = $data['password']; // Bisa digunakan untuk memverifikasi password lama
 } else {
-    echo "Data pengguna tidak ditemukan!";
+    echo "Data dosen tidak ditemukan!";
     exit();
 }
 
 // Proses untuk menyimpan perubahan data
 if (isset($_POST['simpan'])) {
     // Tangkap data yang diubah dari form
-    $username = mysqli_real_escape_string($koneksi, $_POST['username']);
+    $nidn = mysqli_real_escape_string($koneksi, $_POST['nidn']);
+    $nama = mysqli_real_escape_string($koneksi, $_POST['nama']);
+    $program_studi = mysqli_real_escape_string($koneksi, $_POST['program_studi']);
+    $jabatan = mysqli_real_escape_string($koneksi, $_POST['jabatan']);
     $new_password = mysqli_real_escape_string($koneksi, $_POST['password']);
     
-    // Jika password baru diinputkan, lakukan hash password
+    // Cek apakah password baru diinputkan
     if (!empty($new_password)) {
+        // Lakukan hash password
         $password_hash = password_hash($new_password, PASSWORD_DEFAULT);
-        // Update data dengan password baru
-        $query = "UPDATE tbl_user SET username='$username', password='$password_hash' WHERE id='$id_user'";
+        // Update data dengan password baru dan nidn
+        $query = "UPDATE tbl_dosen SET nidn='$nidn', nama='$nama', program_studi='$program_studi', jabatan='$jabatan', password='$password_hash' WHERE id='$id_dosen'";
     } else {
         // Jika password tidak diubah, update tanpa password
-        $query = "UPDATE tbl_user SET username='$username' WHERE id='$id_user'";
+        $query = "UPDATE tbl_dosen SET nidn='$nidn', nama='$nama', program_studi='$program_studi', jabatan='$jabatan' WHERE id='$id_dosen'";
     }
     
     // Eksekusi query update
     $update = mysqli_query($koneksi, $query);
     
     if ($update) {
-        echo "<script>alert('Data berhasil diupdate!'); window.location='edituser.php';</script>";
+        echo "<script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: 'Data berhasil diupdate!',
+                }).then(() => {
+                    window.location = 'edituser.php';
+                });
+              </script>";
     } else {
-        echo "<script>alert('Data gagal diupdate!');</script>";
+        echo "<script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: 'Data gagal diupdate!',
+                });
+              </script>";
     }
+    
 }
 ?>
 
@@ -52,19 +72,28 @@ if (isset($_POST['simpan'])) {
 <div class="right_col" role="main">
     <div class="card mt-3">
         <div class="card-header text-white" style="background-color: #2a3f54;">
-            Edit Data Pengguna
+            Edit Data Dosen
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <form method="post" action="">
                     <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" value="<?=$vusername?>">
+                        <label for="nidn">NIDN</label>
+                        <input type="text" class="form-control" id="nidn" name="nidn" value="<?=$vnidn?>" required>
                     </div>
                     <div class="form-group">
-                        <label for="role">Role</label>
-                        <!-- Hanya menampilkan role yang ada di database, tidak bisa diganti -->
-                        <input type="text" class="form-control" id="role" name="role" value="<?=$vrole?>" readonly>
+                        <label for="nama">Nama</label>
+                        <input type="text" class="form-control" id="nama" name="nama" value="<?=$vnama?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="program_studi">Program Studi</label>
+                        <input type="text" class="form-control" id="program_studi" name="program_studi"
+                            value="<?=$vprogram_studi?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="jabatan">Jabatan</label>
+                        <input type="text" class="form-control" id="jabatan" name="jabatan" value="<?=$vjabatan?>"
+                            required>
                     </div>
                     <div class="form-group">
                         <label for="password">Password Baru</label>

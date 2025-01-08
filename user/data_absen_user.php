@@ -4,8 +4,6 @@ include 'header.php';
 include 'sidebar.php';
 include 'navbar.php';
 
-
-
 // Periksa apakah pengguna sudah login
 if (!isset($_SESSION['id'])) {
     echo "Silakan login terlebih dahulu.";
@@ -51,23 +49,28 @@ $resultAbsen = mysqli_query($koneksi, $queryAbsen);
                             <th>Program Studi</th>
                             <th>Kelas</th>
                             <th>Tanggal dan Waktu</th>
+                            <th>Pertemuan</th> <!-- Menambahkan kolom Pertemuan -->
                         </tr>
                         <?php 
                             $no = 1;
                             if (mysqli_num_rows($resultAbsen) > 0) {
                                 while ($row = mysqli_fetch_assoc($resultAbsen)) { 
+                                    // Mengambil data JSON dari kolom kode_matkul
+                                    $data = json_decode($row['kode_matkul'], true);
+
+                                    // Mengambil nilai 'pertemuan' dari JSON
+                                    $pertemuan = isset($data['pertemuan']) ? $data['pertemuan'] : 'Tidak Ditemukan'; // Menampilkan 'Tidak Ditemukan' jika tidak ada data pertemuan
                             ?>
                         <tr>
                             <td><?= $no++; ?></td>
                             <td>
                                 <?php 
-    $data = json_decode($row['kode_matkul'], true); // Mengubah JSON menjadi array
-    if (isset($data['kode_matkul']) && isset($data['nama'])) {
-        echo $data['kode_matkul'] . '-' . $data['nama']; // Format menjadi KodeMatkul-Nama
-    } else {
-        echo "Data tidak valid"; // Pesan jika data tidak lengkap
-    }
-    ?>
+                                    if (isset($data['kode_matkul']) && isset($data['nama'])) {
+                                        echo $data['kode_matkul'] . '-' . $data['nama']; // Format menjadi KodeMatkul-Nama
+                                    } else {
+                                        echo "Data tidak valid"; // Pesan jika data tidak lengkap
+                                    }
+                                ?>
                             </td>
 
                             <td><?= $row['npm']; ?></td>
@@ -75,25 +78,22 @@ $resultAbsen = mysqli_query($koneksi, $queryAbsen);
                             <td><?= $row['program_studi']; ?></td>
                             <td><?= $row['kelas']; ?></td>
                             <td><?= $row['created_at']; ?></td>
+                            <td><?= $pertemuan; ?></td> <!-- Menampilkan pertemuan -->
                         </tr>
 
                         <?php 
                                 }
                             } else { 
-                            ?>
+                        ?>
                         <tr>
-                            <td colspan="6" class="text-center">Data absen tidak ditemukan</td>
+                            <td colspan="8" class="text-center">Data absen tidak ditemukan</td>
                         </tr>
                         <?php } ?>
                     </table>
                 </div>
             </div>
         </div>
-</div>
-
-
-
-</pag>
+    </pag>
 </div>
 <!-- /page content -->
 
